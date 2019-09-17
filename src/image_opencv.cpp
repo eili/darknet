@@ -962,7 +962,8 @@ void draw_detections_cv_v3(mat_cv* mat, detection *dets, int num, float thresh, 
                 //cvSetImageROI(copy_img, rect);
                 //cvSaveImage(image_name, copy_img, 0);
                 //cvResetImageROI(copy_img);
-
+            
+                //box around detected object:
                 cv::rectangle(*show_img, pt1, pt2, color, width, 8, 0);
                 if (ext_output)
                     printf("\t(left_x: %4.0f   top_y: %4.0f   width: %4.0f   height: %4.0f)\n",
@@ -971,9 +972,12 @@ void draw_detections_cv_v3(mat_cv* mat, detection *dets, int num, float thresh, 
                     printf("\n");
 
                 cv::rectangle(*show_img, pt_text_bg1, pt_text_bg2, color, width, 8, 0);
+                //Box for the label text
                 cv::rectangle(*show_img, pt_text_bg1, pt_text_bg2, color, CV_FILLED, 8, 0);    // filled
                 cv::Scalar black_color = CV_RGB(0, 0, 0);
                 cv::putText(*show_img, labelstr, pt_text, cv::FONT_HERSHEY_COMPLEX_SMALL, font_size, black_color, 2 * font_size, CV_AA);
+                
+                
                 // cv::FONT_HERSHEY_COMPLEX_SMALL, cv::FONT_HERSHEY_SIMPLEX
             }
         }
@@ -985,6 +989,121 @@ void draw_detections_cv_v3(mat_cv* mat, detection *dets, int num, float thresh, 
         cerr << "OpenCV exception: draw_detections_cv_v3() \n";
     }
 }
+
+
+// ====================================================================
+// Draw Detection
+// ====================================================================
+void draw_detections_blurred_cv_v3(mat_cv* mat, detection* dets, int num, float thresh, char** names, image** alphabet, int classes, int ext_output)
+{
+    try {
+        cv::Mat* show_img = mat;
+        int i, j;
+        if (!show_img) return;
+        static int frame_id = 0;
+        frame_id++;
+
+        for (i = 0; i < num; ++i) {
+            char labelstr[4096] = { 0 };
+            int class_id = -1;
+            for (j = 0; j < classes; ++j) {
+                int show = strncmp(names[j], "dont_show", 9);
+                if (dets[i].prob[j] > thresh && show) {
+                    if (class_id < 0) {
+                        strcat(labelstr, names[j]);
+                        class_id = j;
+                        char buff[10];
+                        sprintf(buff, " (%2.0f%%)", dets[i].prob[j] * 100);
+                        strcat(labelstr, buff);
+                    }
+                    else {
+                        strcat(labelstr, ", ");
+                        strcat(labelstr, names[j]);
+                    }
+                    printf("%s: %.0f%% ", names[j], dets[i].prob[j] * 100);
+                }
+            }
+            if (class_id >= 0) {
+                int width = std::max(1.0f, show_img->rows * .002f);
+
+                //if(0){
+                //width = pow(prob, 1./2.)*10+1;
+                //alphabet = 0;
+                //}
+
+                //printf("%d %s: %.0f%%\n", i, names[class_id], prob*100);
+                int offset = class_id * 123457 % classes;
+                float red = get_color(2, offset, classes);
+                float green = get_color(1, offset, classes);
+                float blue = get_color(0, offset, classes);
+                float rgb[3];
+
+                //width = prob*20+2;
+
+                rgb[0] = red;
+                rgb[1] = green;
+                rgb[2] = blue;
+                box b = dets[i].bbox;
+                if (std::isnan(b.w) || std::isinf(b.w)) b.w = 0.5;
+                if (std::isnan(b.h) || std::isinf(b.h)) b.h = 0.5;
+                if (std::isnan(b.x) || std::isinf(b.x)) b.x = 0.5;
+                if (std::isnan(b.y) || std::isinf(b.y)) b.y = 0.5;
+                b.w = (b.w < 1) ? b.w : 1;
+                b.h = (b.h < 1) ? b.h : 1;
+                b.x = (b.x < 1) ? b.x : 1;
+                b.y = (b.y < 1) ? b.y : 1;
+                //printf("%f %f %f %f\n", b.x, b.y, b.w, b.h);
+
+                int left = (b.x - b.w / 2.) * show_img->cols;
+                int right = (b.x + b.w / 2.) * show_img->cols;
+                int top = (b.y - b.h / 2.) * show_img->rows;
+                int bot = (b.y + b.h / 2.) * show_img->rows;
+
+                if (left < 0) left = 0;
+                if (right > show_img->cols - 1) right = show_img->cols - 1;
+                if (top < 0) top = 0;
+                if (bot > show_img->rows - 1) bot = show_img->rows - 1;
+
+                //int b_x_center = (left + right) / 2;
+                //int b_y_center = (top + bot) / 2;
+                //int b_width = right - left;
+                //int b_height = bot - top;
+                //sprintf(labelstr, "%d x %d - w: %d, h: %d", b_x_center, b_y_center, b_width, b_height);
+
+                float const font_size = show_img->rows / 1000.F;
+                cv::Size const text_size = cv::getTextSize(labelstr, cv::FONT_HERSHEY_COMPLEX_SMALL, font_size, 1, 0);
+                cv::Point pt1, pt2, pt_text, pt_text_bg1, pt_text_bg2;
+                pt1.x = left;
+                pt1.y = top;
+                pt2.x = right;
+                pt2.y = bot;
+                pt_text.x = left;
+                pt_text.y = top - 4;// 12;
+                pt_text_bg1.x = left;
+                pt_text_bg1.y = top - (3 + 18 * font_size);
+                pt_text_bg2.x = right;
+                if ((right - left) < text_size.width) pt_text_bg2.x = left + text_size.width;
+                pt_text_bg2.y = top;
+                cv::Scalar color;
+                color.val[0] = red * 256;
+                color.val[1] = green * 256;
+                color.val[2] = blue * 256;
+
+                cv::Rect r(pt1, pt2);
+                cv::Mat C = cv::Mat(*show_img, r);
+                cv::GaussianBlur(C, C, cv::Size(27, 27), 0, 0, 4);
+
+            }
+        }
+        if (ext_output) {
+            fflush(stdout);
+        }
+    }
+    catch (...) {
+        cerr << "OpenCV exception: draw_detections_blurred_cv_v3() \n";
+    }
+}
+
 // ----------------------------------------
 
 // ====================================================================

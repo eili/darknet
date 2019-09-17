@@ -7,6 +7,7 @@
 #include "box.h"
 #include "demo.h"
 #include "option_list.h"
+#include "anonymize.h"
 
 #ifndef __COMPAR_FN_T
 #define __COMPAR_FN_T
@@ -1498,6 +1499,20 @@ void run_detector(int argc, char **argv)
             if (strlen(filename) > 0)
                 if (filename[strlen(filename) - 1] == 0x0d) filename[strlen(filename) - 1] = 0;
         demo(cfg, weights, thresh, hier_thresh, cam_index, filename, names, classes, frame_skip, prefix, out_filename,
+            mjpeg_port, json_port, dont_show, ext_output, letter_box);
+
+        free_list_contents_kvp(options);
+        free_list(options);
+    }
+    else if (0 == strcmp(argv[2], "anon")) {
+        list* options = read_data_cfg(datacfg);
+        int classes = option_find_int(options, "classes", 20);
+        char* name_list = option_find_str(options, "names", "data/names.list");
+        char** names = get_labels(name_list);
+        if (filename)
+            if (strlen(filename) > 0)
+                if (filename[strlen(filename) - 1] == 0x0d) filename[strlen(filename) - 1] = 0;
+        anon(cfg, weights, thresh, hier_thresh, cam_index, filename, names, classes, frame_skip, prefix, out_filename,
             mjpeg_port, json_port, dont_show, ext_output, letter_box);
 
         free_list_contents_kvp(options);
