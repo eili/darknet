@@ -401,7 +401,8 @@ void draw_detections_v3(image im, detection *dets, int num, float thresh, char *
             else {
                 draw_box_width(im, left, top, right, bot, width, red, green, blue); // 3 channels RGB
             }
-            if (alphabet) {
+            //Note! Don't draw label when only one class.
+            if (alphabet && classes>1) {
                 char labelstr[4096] = { 0 };
                 strcat(labelstr, names[selected_detections[i].best_class]);
                 int j;

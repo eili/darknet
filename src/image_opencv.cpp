@@ -991,10 +991,54 @@ void draw_detections_cv_v3(mat_cv* mat, detection *dets, int num, float thresh, 
 }
 
 
+/*
+Blur a rectangle in the given image (mat)
+Use the rectangles width to determine the blur mask size. 2/3 of image width seems to blur properly.
+*/
+void blurRectangle(cv::Mat* mat, cv::Point pt1, cv::Point pt2)
+{
+    int maskWidth = pt2.x - pt1.x;
+    maskWidth = 2 * maskWidth / 3;
+    //Ensure it has an odd number
+    if (maskWidth % 2 == 0)
+        maskWidth += 1;
+    cv::Rect r(pt1, pt2);
+    cv::Mat C = cv::Mat(*mat, r);
+
+    cv::GaussianBlur(C, C, cv::Size(maskWidth, maskWidth), 0, 0, 4);
+}
+
+/*
+Call this function with color parameters in the range 0-1.
+Can be used as color parameter to the function cv::rectangle.
+*/
+cv::Scalar getColor(float r, float g, float b)
+{
+    cv::Scalar color;
+    if (r > 1)
+        r = 1;
+    if (g > 1)
+        g = 1;
+    if (b > 1)
+        b = 1;
+    color.val[2] = r * 256;
+    color.val[1] = g * 256;
+    color.val[0] = b * 256;
+    return color;
+};
+
+
 // ====================================================================
 // Draw Detection
+// mat:
+// dets: local_dets
+// num: local_nboxes
+// thresh: demo_thresh
+// names: demo_names
+// classes: demo_classes
+// ext_output: demo_ext_output
 // ====================================================================
-void draw_detections_blurred_cv_v3(mat_cv* mat, detection* dets, int num, float thresh, char** names, image** alphabet, int classes, int ext_output)
+void draw_detections_blurred_cv_v3(mat_cv* mat, detection* dets, int num, float thresh, char** names, int classes, int ext_output)
 {
     try {
         cv::Mat* show_img = mat;
@@ -1026,23 +1070,9 @@ void draw_detections_blurred_cv_v3(mat_cv* mat, detection* dets, int num, float 
             if (class_id >= 0) {
                 int width = std::max(1.0f, show_img->rows * .002f);
 
-                //if(0){
-                //width = pow(prob, 1./2.)*10+1;
-                //alphabet = 0;
-                //}
-
                 //printf("%d %s: %.0f%%\n", i, names[class_id], prob*100);
-                int offset = class_id * 123457 % classes;
-                float red = get_color(2, offset, classes);
-                float green = get_color(1, offset, classes);
-                float blue = get_color(0, offset, classes);
-                float rgb[3];
+                //int offset = class_id * 123457 % classes;
 
-                //width = prob*20+2;
-
-                rgb[0] = red;
-                rgb[1] = green;
-                rgb[2] = blue;
                 box b = dets[i].bbox;
                 if (std::isnan(b.w) || std::isinf(b.w)) b.w = 0.5;
                 if (std::isnan(b.h) || std::isinf(b.h)) b.h = 0.5;
@@ -1064,35 +1094,17 @@ void draw_detections_blurred_cv_v3(mat_cv* mat, detection* dets, int num, float 
                 if (top < 0) top = 0;
                 if (bot > show_img->rows - 1) bot = show_img->rows - 1;
 
-                //int b_x_center = (left + right) / 2;
-                //int b_y_center = (top + bot) / 2;
-                //int b_width = right - left;
-                //int b_height = bot - top;
-                //sprintf(labelstr, "%d x %d - w: %d, h: %d", b_x_center, b_y_center, b_width, b_height);
-
-                float const font_size = show_img->rows / 1000.F;
-                cv::Size const text_size = cv::getTextSize(labelstr, cv::FONT_HERSHEY_COMPLEX_SMALL, font_size, 1, 0);
-                cv::Point pt1, pt2, pt_text, pt_text_bg1, pt_text_bg2;
+                cv::Point pt1, pt2;
                 pt1.x = left;
                 pt1.y = top;
                 pt2.x = right;
                 pt2.y = bot;
-                pt_text.x = left;
-                pt_text.y = top - 4;// 12;
-                pt_text_bg1.x = left;
-                pt_text_bg1.y = top - (3 + 18 * font_size);
-                pt_text_bg2.x = right;
-                if ((right - left) < text_size.width) pt_text_bg2.x = left + text_size.width;
-                pt_text_bg2.y = top;
-                cv::Scalar color;
-                color.val[0] = red * 256;
-                color.val[1] = green * 256;
-                color.val[2] = blue * 256;
 
-                cv::Rect r(pt1, pt2);
-                cv::Mat C = cv::Mat(*show_img, r);
-                cv::GaussianBlur(C, C, cv::Size(27, 27), 0, 0, 4);
-
+                //To draw a rectangle around the detection
+                //cv::Scalar color;
+                //color = getColor(0.8, 0, 0.2);
+                //cv::rectangle(*show_img, pt1, pt2, color, 2, 8, 0);
+                blurRectangle(show_img, pt1, pt2);
             }
         }
         if (ext_output) {

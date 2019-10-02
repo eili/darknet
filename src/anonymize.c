@@ -182,7 +182,7 @@ void anon(char* cfgfile, char* weightfile, float thresh, float hier_thresh, int 
     int count = 0;
     if (!prefix && !dont_show) {
         int full_screen = 0;
-        create_window_cv("Demo", full_screen, 1352, 1013);
+        create_window_cv("Anonymizer", full_screen, 1352, 1013);
     }
 
 
@@ -229,7 +229,7 @@ void anon(char* cfgfile, char* weightfile, float thresh, float hier_thresh, int 
                 send_json(local_dets, local_nboxes, l.classes, demo_names, frame_id, demo_json_port, timeout);
             }
 
-            draw_detections_blurred_cv_v3(show_img, local_dets, local_nboxes, demo_thresh, demo_names, demo_alphabet, demo_classes, demo_ext_output);
+            draw_detections_blurred_cv_v3(show_img, local_dets, local_nboxes, demo_thresh, demo_names, demo_classes, demo_ext_output);
 
             free_detections(local_dets, local_nboxes);
 
@@ -237,7 +237,7 @@ void anon(char* cfgfile, char* weightfile, float thresh, float hier_thresh, int 
 
             if (!prefix) {
                 if (!dont_show) {
-                    show_image_mat(show_img, "Demo");
+                    show_image_mat(show_img, "Anonymize");
                     int c = wait_key_cv(1);
                     if (c == 10) {
                         if (frame_skip == 0) frame_skip = 60;
