@@ -7,6 +7,8 @@
 #include "box.h"
 #include "image.h"
 #include "anonymize.h"
+#include "detection_store.h"
+
 #ifdef WIN32
 #include <time.h>
 #include "gettimeofday.h"
@@ -104,6 +106,35 @@ double anon_get_wall_time()
     }
     return (double)walltime.tv_sec + (double)walltime.tv_usec * .000001;
 }
+
+detection* createDummyDetections(int num, float startX, float startY)
+{
+    detection* detPtr = NULL;
+    detPtr = (detection*)calloc(num, sizeof(detection));
+    if (detPtr == NULL)
+        exit(0);
+    int nclasses = 1;
+
+    for (int i = 0; i < num; i++)
+    {
+        box b;
+        b.x = startX + i * 0.09;
+        b.y = startY;
+        b.w = 0.05f;
+        b.h = 0.09f;
+        float prob = 0.93f;
+        detection det;
+        det.bbox = b;
+        det.classes = 1;
+        det.sort_class = 0;
+        det.prob = (float*)calloc(nclasses, sizeof(float));
+      //  det.mask = (float*)calloc(nclasses, sizeof(float));
+        det.prob[0] = prob;
+        detPtr[i] = det;
+    }
+    return detPtr;
+}
+
 
 void anon(char* cfgfile, char* weightfile, float thresh, float hier_thresh, int cam_index, const char* filename, char** names, int classes,
     int frame_skip, char* prefix, char* out_filename, int mjpeg_port, int json_port, int dont_show, int ext_output, int letter_box_in)
@@ -204,6 +235,9 @@ void anon(char* cfgfile, char* weightfile, float thresh, float hier_thresh, int 
     }
 
     double before = anon_get_wall_time();
+    detectionStore* detStore = CreateStore();
+    int is_store_initialized = 0;
+    int k = 0;
 
     while (1) {
         ++count;
@@ -218,19 +252,38 @@ void anon(char* cfgfile, char* weightfile, float thresh, float hier_thresh, int 
             //if (nms) do_nms_obj(local_dets, local_nboxes, l.classes, nms);    // bad results
             if (nms) do_nms_sort(local_dets, local_nboxes, l.classes, nms);
 
+            /*local_nboxes = 4;
+            local_dets = createDummyDetections(local_nboxes, 0.1f, 0.1f);
+*/
             //printf("\033[2J");
             //printf("\033[1;1H");
             //printf("\nFPS:%.1f\n", fps);
             printf("Objects:\n\n");
 
             ++frame_id;
-            if (demo_json_port > 0) {
+         /*   if (demo_json_port > 0) {
                 int timeout = 400000;
                 send_json(local_dets, local_nboxes, l.classes, demo_names, frame_id, demo_json_port, timeout);
             }
+*/
+            int* nDetPtr = &local_nboxes;
 
-            draw_detections_blurred_cv_v3(show_img, local_dets, local_nboxes, demo_thresh, demo_names, demo_classes, demo_ext_output);
+            //if (count > 1) {
+                merge(dets, nDetPtr, detStore, 10);
+                //printStore(detStore);
+            //}
+           //printDetections(detStore2->detections, detStore2->detectionLength);
 
+
+            printf("calling draw_detections_blurred_cv_v4:%d\n", detStore->storeLength);
+            //draw_detections_blurred_cv_v3(show_img, detStore->detections, detStore->detectionLength, demo_thresh, demo_names, demo_classes, demo_ext_output);
+            draw_detections_blurred_cv_v4(show_img, detStore->store, detStore->storeLength, demo_thresh, demo_names, demo_classes, demo_ext_output);
+           // printf("\ncalling free_detections:%d\n", detStore->detectionLength);
+            //free_detections(local_dets, *nDetPtr);
+
+            //printf("calling draw_detections_blurred_cv_v3:%d\n", local_nboxes);
+            //draw_detections_blurred_cv_v3(show_img, local_dets, local_nboxes, demo_thresh, demo_names, demo_classes, demo_ext_output);
+            //printf("calling free_detections:%d\n", local_nboxes);
             free_detections(local_dets, local_nboxes);
 
             printf("\nFPS:%.1f\n", fps);
@@ -255,14 +308,6 @@ void anon(char* cfgfile, char* weightfile, float thresh, float hier_thresh, int 
                 char buff[256];
                 sprintf(buff, "%s_%08d.jpg", prefix, count);
                 if (show_img) save_cv_jpg(show_img, buff);
-            }
-
-            // if you run it with param -mjpeg_port 8090  then open URL in your web-browser: http://localhost:8090
-            if (mjpeg_port > 0 && show_img) {
-                int port = mjpeg_port;
-                int timeout = 400000;
-                int jpeg_quality = 40;    // 1 - 100
-                send_mjpeg(show_img, port, timeout, jpeg_quality);
             }
 
             // save video file
@@ -306,7 +351,7 @@ void anon(char* cfgfile, char* weightfile, float thresh, float hier_thresh, int 
     release_mat(&show_img);
     release_mat(&in_img);
     free_image(in_s);
-
+    freeStore(detStore);
     free(avg);
     for (j = 0; j < NFRAMES; ++j) free(predictions[j]);
     for (j = 0; j < NFRAMES; ++j) free_image(images[j]);

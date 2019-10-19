@@ -197,6 +197,7 @@
     <ClCompile Include="..\..\src\deconvolutional_layer.c" />
     <ClCompile Include="..\..\src\demo.c" />
     <ClCompile Include="..\..\src\detection_layer.c" />
+    <ClCompile Include="..\..\src\detection_store.c" />
     <ClCompile Include="..\..\src\detector.c" />
     <ClCompile Include="..\..\src\dice.c" />
     <ClCompile Include="..\..\src\dropout_layer.c" />
@@ -264,6 +265,7 @@
     <ClInclude Include="..\..\src\deconvolutional_layer.h" />
     <ClInclude Include="..\..\src\demo.h" />
     <ClInclude Include="..\..\src\detection_layer.h" />
+    <ClInclude Include="..\..\src\detection_store.h" />
     <ClInclude Include="..\..\src\dropout_layer.h" />
     <ClInclude Include="..\..\src\gemm.h" />
     <ClInclude Include="..\..\src\getopt.h" />
