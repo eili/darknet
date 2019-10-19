@@ -102,6 +102,7 @@ void merge(detection* dets, int* num, detectionStore* detStore, int maxMemCount)
     const int buffersize = 100;
     detectedObj toAddFromMemory[100];
     int currentStoreLength = detStore->storeLength;
+    int nClasses = 1;
     int tmpCounter = 0;
     //See if there are any detections in Store that are missing in the current detection list (this video frame).
     //Add to temporary array if counter not above limit.
@@ -153,7 +154,7 @@ void merge(detection* dets, int* num, detectionStore* detStore, int maxMemCount)
     {
         printf("i=%d, ", i);
         detection det = dets[i];
-        detection* copiedDet = makeDeepCopy(&det, 1);
+        detection* copiedDet = makeDeepCopy(&det, nClasses);
         memP[i].det = *copiedDet;
         memP[i].missCount = 0;
     }
@@ -162,7 +163,7 @@ void merge(detection* dets, int* num, detectionStore* detStore, int maxMemCount)
     for (int i = 0; i < tmpCounter; i++)
     {
         detectedObj tmp = toAddFromMemory[i];
-        detection* copiedDet = makeDeepCopy(&tmp.det, 1);
+        detection* copiedDet = makeDeepCopy(&tmp.det, nClasses);
         detectedObj tmp2;
         tmp2.det = *copiedDet;
         tmp2.missCount = tmp.missCount;
@@ -191,6 +192,7 @@ void merge2(detection* dets, int* num, detectionStore* detStore, int maxMemCount
     const int buffersize = 100;
     detectedObj toAddFromMemory[100];
     int currentStoreLength = detStore->storeLength;
+    int nClasses = 1;
     int tmpCounter = 0;
     //See if there are any detections in Store that are missing in the current detection list (this video frame).
     //Add to temporary array if counter not above limit.
@@ -230,7 +232,7 @@ void merge2(detection* dets, int* num, detectionStore* detStore, int maxMemCount
             }
         }
     }
-    freeStore(detStore);
+    freeStore(detStore, nClasses);
 
     //Here we only add new detections to the store
     //Note that we cannot add to the already existing temporary list as we use it in the inner too to search from.
@@ -280,7 +282,7 @@ void merge2(detection* dets, int* num, detectionStore* detStore, int maxMemCount
     {
         detectedObj tmp = toAddFromMemory[i];
 
-        detection* copiedDet = makeDeepCopy(&tmp.det, 1);
+        detection* copiedDet = makeDeepCopy(&tmp.det, nClasses);
         tmp.det = *copiedDet;
         memP[i] = tmp;
     }
@@ -289,7 +291,7 @@ void merge2(detection* dets, int* num, detectionStore* detStore, int maxMemCount
     for (int i = 0; i < newToMemoryCounter; i++)
     {
         detection det = newToMemory[i];
-        detection* copiedDet = makeDeepCopy(&det, 1);
+        detection* copiedDet = makeDeepCopy(&det, nClasses);
         detectedObj tmp = createObject(*copiedDet);
         memP[tmpCounter + i] = tmp;
     }
@@ -312,23 +314,23 @@ void printStore(detectionStore* detStore)
 }
 
 
-void freeDetections(detection* detections, int length)
+void freeDetections(detection* detections, int nClasses)
 {
-    if (length > 0) {
-        for (int i = 0; i < length; i++) {
+    if (nClasses > 0) {
+        for (int i = 0; i < nClasses; i++) {
             free(detections[i].prob);
         }
         free(detections);
     }
 }
-void freeStore(detectionStore* detStore)
+void freeStore(detectionStore* detStore, int nClasses)
 {
     if (detStore->storeLength > 0)
     {
         for (int i = 0; i < detStore->storeLength; i++)
         {
             detectedObj detObj = detStore->store[i];
-            freeDetections(&detObj.det, 1);
+            freeDetections(&detObj.det, nClasses);
         }
     }
 }

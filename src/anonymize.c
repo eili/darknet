@@ -128,7 +128,7 @@ detection* createDummyDetections(int num, float startX, float startY)
         det.classes = 1;
         det.sort_class = 0;
         det.prob = (float*)calloc(nclasses, sizeof(float));
-      //  det.mask = (float*)calloc(nclasses, sizeof(float));
+        //  det.mask = (float*)calloc(nclasses, sizeof(float));
         det.prob[0] = prob;
         detPtr[i] = det;
     }
@@ -255,30 +255,23 @@ void anon(char* cfgfile, char* weightfile, float thresh, float hier_thresh, int 
             /*local_nboxes = 4;
             local_dets = createDummyDetections(local_nboxes, 0.1f, 0.1f);
 */
-            //printf("\033[2J");
-            //printf("\033[1;1H");
-            //printf("\nFPS:%.1f\n", fps);
+//printf("\033[2J");
+//printf("\033[1;1H");
+//printf("\nFPS:%.1f\n", fps);
             printf("Objects:\n\n");
 
             ++frame_id;
-         /*   if (demo_json_port > 0) {
-                int timeout = 400000;
-                send_json(local_dets, local_nboxes, l.classes, demo_names, frame_id, demo_json_port, timeout);
-            }
-*/
+            /*   if (demo_json_port > 0) {
+                   int timeout = 400000;
+                   send_json(local_dets, local_nboxes, l.classes, demo_names, frame_id, demo_json_port, timeout);
+               }
+   */
             int* nDetPtr = &local_nboxes;
 
-            //if (count > 1) {
-                merge(dets, nDetPtr, detStore, 10);
-                //printStore(detStore);
-            //}
-           //printDetections(detStore2->detections, detStore2->detectionLength);
-
+            merge(dets, nDetPtr, detStore, 10);
 
             printf("calling draw_detections_blurred_cv_v4:%d\n", detStore->storeLength);
-            //draw_detections_blurred_cv_v3(show_img, detStore->detections, detStore->detectionLength, demo_thresh, demo_names, demo_classes, demo_ext_output);
             draw_detections_blurred_cv_v4(show_img, detStore->store, detStore->storeLength, demo_thresh, demo_names, demo_classes, demo_ext_output);
-           // printf("\ncalling free_detections:%d\n", detStore->detectionLength);
             //free_detections(local_dets, *nDetPtr);
 
             //printf("calling draw_detections_blurred_cv_v3:%d\n", local_nboxes);
@@ -351,7 +344,7 @@ void anon(char* cfgfile, char* weightfile, float thresh, float hier_thresh, int 
     release_mat(&show_img);
     release_mat(&in_img);
     free_image(in_s);
-    freeStore(detStore);
+    freeStore(detStore, demo_classes);
     free(avg);
     for (j = 0; j < NFRAMES; ++j) free(predictions[j]);
     for (j = 0; j < NFRAMES; ++j) free_image(images[j]);
