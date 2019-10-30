@@ -1037,7 +1037,16 @@ extern "C" {
         cv::ellipse(*mat, center, esize, 0, 0, 360, color, 3, 8, 0);
     }
 
-   
+    cv::Mat blurRectangleEdgepreserve(cv::Mat image, cv::Point pt1, cv::Point pt2)
+    {
+        cv::Rect r(pt1, pt2);
+        cv::Mat C = cv::Mat(image, r);
+
+        cv::Mat dst;
+        cv::bilateralFilter(C, dst, 25, 150, 20, cv::BORDER_REPLICATE);
+        dst.copyTo(image(cv::Rect(pt1.x, pt1.y, pt2.x - pt1.x, pt2.y - pt1.y)));
+        return image;
+    }
 
 
     // ====================================================================
@@ -1128,6 +1137,7 @@ extern "C" {
         if (num == 0)
             return;
         try {
+            cv::Mat faceimage = cv::imread("D:/AI/Trainingdata/WIDER/face2_zeke.png");
             cv::Mat* show_img = mat;
             int i, j;
             if (!show_img) return;
@@ -1170,6 +1180,7 @@ extern "C" {
 
 
                     box b = det.bbox;
+                   
 
                     //printf("%f %f %f %f\n", b.x, b.y, b.w, b.h);
                   /*  if (detObj.missCount == 0) {
@@ -1193,6 +1204,7 @@ extern "C" {
                     pt1.y = top;
                     pt2.x = right;
                     pt2.y = bot;
+                    cv::Size s = cv::Size(right - left, bot - top);
                     //To draw a rectangle around the detection
                     if (detObj.missCount > 0)
                     {
@@ -1204,16 +1216,22 @@ extern "C" {
                         cv::rectangle(*show_img, pt1, pt2, color, 4, 8, 0);
                     }
                     blurRectangle(show_img, pt1, pt2);
+                    //cv::Mat blurred = blurRectangleEdgepreserve(*show_img, pt1, pt2);
+                    //*show_img = blurred;
+                  /*  cv::Mat r, t;
+                    cv::resize(faceimage, r, s);
+                    t = *show_img;
+                    r.copyTo(t(cv::Rect(pt1.x, pt1.y, s.width, s.height)));
+
                     int bheight = top - bot;
                     int bwidth = right - left;
+
+                    *show_img = t;*/
 
                     //drawEllipse(show_img, pt1, bheight, bwidth);
                     cv::Scalar color;
                     color = getColor(0.8, 0.6, 0);
-                    cv::Size esize;
-                    esize.height = bheight;
-                    esize.width = bwidth;
-                    //cv::ellipse(*show_img, pt1, esize, 0, 0, 360, color, 3, 8, 0); //No ellipse visible
+                   
                     //cv::rectangle(*show_img, pt1, pt2, color, 4, 8, 0);           //rectangle ok
 
                     if (classProb > 0 && classProb < 0.2)

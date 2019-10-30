@@ -23,6 +23,19 @@ float boxRadius(box b)
 //If this diff is positive, then the boxes are too far from each other to overlap. They are then separate boxes.
 float boxCompare(box b1, box b2)
 {
+    if (b2.x > b1.x)
+    {
+        float test = b2.x - (b1.x + b1.w);
+        if (test > 0)
+            return test;
+    }
+    else
+    {
+        float test = b1.x - (b2.x + b2.w);
+        if (test > 0)
+            return test;
+    }
+
     float r1 = boxRadius(b1);
     float r2 = boxRadius(b2);
     float r1r2 = r1 + r2;
@@ -209,16 +222,16 @@ void merge2(detection* dets, int* num, detectionStore* detStore, int maxMemCount
             detection det = dets[j];
 
             float cmp = boxCompare(det.bbox, memDet.det.bbox);
-            if (cmp < 0) {
+            if (cmp <= 0) {
                 //We say this is the same object.
 
                 found = 1;
                 detectedObj tmp = createObject(det);
                /* tmp.deltaX = det.bbox.x - memDet.det.bbox.x;
                 tmp.deltaY = det.bbox.y - memDet.det.bbox.y;*/
-                if (tmpCounter < buffersize) {
+               /* if (tmpCounter < buffersize) {
                     toAddFromMemory[tmpCounter++] = tmp;
-                }
+                }*/
                 //break out from the inner loop as we have found a match
                 break;
             }
@@ -232,7 +245,8 @@ void merge2(detection* dets, int* num, detectionStore* detStore, int maxMemCount
             }
         }
     }
-    freeStore(detStore, nClasses);
+
+    //freeDetections(dets, nClasses);
 
     //Here we only add new detections to the store
     //Note that we cannot add to the already existing temporary list as we use it in the inner too to search from.
