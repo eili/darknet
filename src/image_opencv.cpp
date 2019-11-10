@@ -297,6 +297,8 @@ extern "C" {
     // ----------------------------------------
     */
 
+
+
     cv::Mat image_to_mat(image img)
     {
         int channels = img.c;
@@ -307,6 +309,7 @@ extern "C" {
 
         for (int y = 0; y < img.h; ++y) {
             for (int x = 0; x < img.w; ++x) {
+                // Creates RGB
                 for (int c = 0; c < img.c; ++c) {
                     float val = img.data[c * img.h * img.w + y * img.w + x];
                     mat.data[y * step + x * img.c + c] = (unsigned char)(val * 255);
@@ -315,6 +318,31 @@ extern "C" {
         }
         return mat;
     }
+
+
+    cv::Mat image_to_mat_BGR(image img)
+    {
+        int channels = img.c;
+        int width = img.w;
+        int height = img.h;
+        cv::Mat mat = cv::Mat(height, width, CV_8UC(channels));
+        int step = mat.step;
+
+        for (int y = 0; y < img.h; ++y) {
+            for (int x = 0; x < img.w; ++x) {
+
+                //But shall be BGR for OpenCV:
+                int k = 0;
+                for (int c = img.c - 1; c >= 0; --c) {
+                    float val = img.data[c * img.h * img.w + y * img.w + x];
+                    mat.data[y * step + x * img.c + k] = (unsigned char)(val * 255);
+                    k++;
+                }
+            }
+        }
+        return mat;
+    }
+
     // ----------------------------------------
 
     image mat_to_image(cv::Mat mat)
@@ -848,6 +876,35 @@ extern "C" {
     // ----------------------------------------
 
 
+    /*
+    Used to change folder for storing anonymized images
+    From
+    data/wider/Validation/..
+    to
+    result/wider/Validation/...
+    */
+    const char* makeResultFilestring(const char* filename, const char* newfolder)
+    {
+        std::string s1 = std::string(filename);
+        std::string s2 = std::string(newfolder);
+        int k = s1.find("/");
+        std::string sres = s1.replace(0, k, s2);
+        return sres.c_str();
+    }
+
+    /*
+    Strips away file extension
+    myimage.jpg returned as myimage
+    */
+    const char* stripExtension(const char* filename)
+    {
+        std::string s1 = std::string(filename);
+        int k = s1.find(".");
+        std::string sres = s1.substr(0, k);
+        return sres.c_str();
+    }
+
+
     // ====================================================================
     // Draw Detection
     // ====================================================================
@@ -1017,7 +1074,7 @@ extern "C" {
     void blurRectangle(cv::Mat* mat, cv::Point pt1, cv::Point pt2)
     {
         int maskWidth = pt2.x - pt1.x;
-        maskWidth = 2 * maskWidth / 3;
+        maskWidth = 2 * maskWidth / 5;//divide by 3 for good blur
         //Ensure it has an odd number
         if (maskWidth % 2 == 0)
             maskWidth += 1;
@@ -1043,7 +1100,7 @@ extern "C" {
         cv::Mat C = cv::Mat(image, r);
 
         cv::Mat dst;
-        cv::bilateralFilter(C, dst, 25, 150, 20, cv::BORDER_REPLICATE);
+        cv::bilateralFilter(C, dst, 45, 150, 20, cv::BORDER_REPLICATE);
         dst.copyTo(image(cv::Rect(pt1.x, pt1.y, pt2.x - pt1.x, pt2.y - pt1.y)));
         return image;
     }
@@ -1059,37 +1116,50 @@ extern "C" {
     // classes: demo_classes
     // ext_output: demo_ext_output
     // ====================================================================
-    void draw_detections_blurred_cv_v3(mat_cv* mat, detection* dets, int num, float thresh, char** names, int classes, int ext_output)
+    //void draw_detections_blurred_cv_v3(mat_cv* mat, detection* dets, int num, float thresh, char** names, int classes, int ext_output)
+    mat_cv* draw_detections_blurred_cv_v3(image im, detection* dets, int num, float thresh, char** names, int classes, int ext_output)
     {
+      
         try {
-            cv::Mat* show_img = mat;
+            cv::Mat* mat_ptr = new cv::Mat();
+            cv::Mat& mat = *mat_ptr;
+            //cv::Mat faceimage = cv::imread("D:/AI/Trainingdata/WIDER/face2_zeke.png");
+            //cv::Mat faceimage = cv::imread("D:/AI/Trainingdata/WIDER/tpde_female_1.JFIF");
+            mat = image_to_mat_BGR(im);
+
+            cv::Mat* show_img = &mat;
+          
+
             int i, j;
-            if (!show_img) return;
+            if (!show_img) return NULL;
             static int frame_id = 0;
             frame_id++;
+            printf("num: %d\n", num);
+            printf("classes: %d", classes);
+
 
             for (i = 0; i < num; ++i) {
                 char labelstr[4096] = { 0 };
                 int class_id = -1;
-                //for (j = 0; j < classes; ++j) {
-                //    printf("j=%d, ", j);
-                //    int show = strncmp(names[j], "dont_show", 9);
-                //    if (dets[i].prob[j] > thresh && show) {
-                //        if (class_id < 0) {
-                //            strcat(labelstr, names[j]);
-                //            class_id = j;
-                //            char buff[10];
-                //            sprintf(buff, " (%2.0f%%)", dets[i].prob[j] * 100);
-                //            strcat(labelstr, buff);
-                //        }
-                //        else {
-                //            strcat(labelstr, ", ");
-                //            strcat(labelstr, names[j]);
-                //        }
-                //        //class_id>=0
-                //        printf("%s: %.0f%% ", names[j], dets[i].prob[j] * 100);
-                //    }
-                //}
+                for (j = 0; j < classes; ++j) {
+                    printf("j=%d, ", j);
+                    int show = strncmp(names[j], "dont_show", 9);
+                    if (dets[i].prob[j] > thresh && show) {
+                        if (class_id < 0) {
+                            strcat(labelstr, names[j]);
+                            class_id = j;
+                            char buff[10];
+                            sprintf(buff, " (%2.0f%%)", dets[i].prob[j] * 100);
+                            strcat(labelstr, buff);
+                        }
+                        else {
+                            strcat(labelstr, ", ");
+                            strcat(labelstr, names[j]);
+                        }
+                        //class_id>=0
+                        printf("%s: %.0f%% ", names[j], dets[i].prob[j] * 100);
+                    }
+                }
                 if (class_id >= 0) {
                     int width = std::max(1.0f, show_img->rows * .002f);
                     //printf("%d %s: %.0f%%\n", i, names[class_id], prob*100);
@@ -1116,34 +1186,63 @@ extern "C" {
                     pt2.x = right;
                     pt2.y = bot;
                     //To draw a rectangle around the detection
-                    //cv::Scalar color;
-                    //color = getColor(0.8, 0, 0.2);
-                    //cv::rectangle(*show_img, pt1, pt2, color, 2, 8, 0);
-                    blurRectangle(show_img, pt1, pt2);
+
+                    
+
+                    cv::Scalar color;
+                    color = getColor(0.8, 0, 0.2);
+                    //cv::rectangle(mat, pt1, pt2, color, 2, 8, 0);
+
+                    //Basic blur effect
+                    blurRectangle(&mat, pt1, pt2);
+
+                   /*  cv::Mat blurred = blurRectangleEdgepreserve(mat, pt1, pt2);
+                     mat = blurred;*/
+
+
+                    //Replace detection box with special face image
+                    /*
+                    cv::Size s = cv::Size(right - left, bot - top);
+                    cv::Mat r, t;
+                    cv::resize(faceimage, r, s);
+                    t = mat;
+                    r.copyTo(t(cv::Rect(pt1.x, pt1.y, s.width, s.height)));
+*/
                 }
             }
             if (ext_output) {
                 fflush(stdout);
             }
+            return (mat_cv*)mat_ptr;
         }
         catch (...) {
             cerr << "OpenCV exception: draw_detections_blurred_cv_v3() \n";
         }
     }
 
+    void saveImage(mat_cv* mat, const char* filename)
+    {
+        cv::Mat* show_img = mat;
+        imwrite(filename, *show_img);
+    }
 
     void draw_detections_blurred_cv_v4(mat_cv* mat, detectedObj* detObjs, int num, float thresh, char** names, int classes, int ext_output)
     {
-        if (num == 0)
+        if (num == 0) {
+            printf("draw_detections_blurred_cv_v4: num param = 0, exits.\n");
             return;
+        }
         try {
-            cv::Mat faceimage = cv::imread("D:/AI/Trainingdata/WIDER/face2_zeke.png");
+            
+            //cv::Mat faceimage = cv::imread("D:/AI/Trainingdata/WIDER/face2_zeke.png");
             cv::Mat* show_img = mat;
+            
             int i, j;
             if (!show_img) return;
             static int frame_id = 0;
             frame_id++;
-
+            printf("num: %d\n", num);
+            //printf("classes: %d", classes);
 
             for (i = 0; i < num; ++i) {
                 detectedObj detObj = detObjs[i];
@@ -1208,7 +1307,7 @@ extern "C" {
                     //To draw a rectangle around the detection
                     if (detObj.missCount > 0)
                     {
-                        //If detection is from memory, indicate it by drawing a rectangle, that changes colur with the memory count. Older changes from red to purple.
+                        //If detection is from memory, indicate it by drawing a rectangle, that changes color with the memory count. Older changes from red to purple.
                         cv::Scalar color;
                         
                         float countFraction = fminf((float) detObj.missCount / 30, 1);
@@ -1218,7 +1317,7 @@ extern "C" {
                     blurRectangle(show_img, pt1, pt2);
                     //cv::Mat blurred = blurRectangleEdgepreserve(*show_img, pt1, pt2);
                     //*show_img = blurred;
-                  /*  cv::Mat r, t;
+                /*    cv::Mat r, t;
                     cv::resize(faceimage, r, s);
                     t = *show_img;
                     r.copyTo(t(cv::Rect(pt1.x, pt1.y, s.width, s.height)));
@@ -1234,10 +1333,10 @@ extern "C" {
                    
                     //cv::rectangle(*show_img, pt1, pt2, color, 4, 8, 0);           //rectangle ok
 
-                    if (classProb > 0 && classProb < 0.2)
+                  /*  if (classProb > 0 && classProb < 0.2)
                     {
                         cv::rectangle(*show_img, pt1, pt2, color, 2, 8, 0);
-                    }
+                    }*/
           
                   
                 }

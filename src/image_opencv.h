@@ -90,8 +90,13 @@ void draw_detections_cv_v3(mat_cv* show_img, detection *dets, int num, float thr
 
 
 //Blur detection(s)
-void draw_detections_blurred_cv_v3(mat_cv* mat, detection* dets, int num, float thresh, char** names, int classes, int ext_output);
+//void draw_detections_blurred_cv_v3(mat_cv* mat, detection* dets, int num, float thresh, char** names, int classes, int ext_output);
+mat_cv* draw_detections_blurred_cv_v3(image im, detection* dets, int num, float thresh, char** names, int classes, int ext_output);
 void draw_detections_blurred_cv_v4(mat_cv* mat, detectedObj* dets, int num, float thresh, char** names, int classes, int ext_output);
+
+const char* makeResultFilestring(const char* filename, const char* newfolder);
+const char* stripExtension(const char* filename);
+void saveImage(mat_cv* mat, const char* filename);
 
 // Draw Loss & Accuracy chart
 mat_cv* draw_train_chart(float max_img_loss, int max_batches, int number_of_lines, int img_size, int dont_show);
