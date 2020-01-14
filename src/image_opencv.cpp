@@ -1074,7 +1074,7 @@ extern "C" {
     void blurRectangle(cv::Mat* mat, cv::Point pt1, cv::Point pt2)
     {
         int maskWidth = pt2.x - pt1.x;
-        maskWidth = 2 * maskWidth / 5;//divide by 3 for good blur
+        maskWidth = 2 * maskWidth / 3;//divide by 3 for good blur
         //Ensure it has an odd number
         if (maskWidth % 2 == 0)
             maskWidth += 1;
@@ -1116,7 +1116,6 @@ extern "C" {
     // classes: demo_classes
     // ext_output: demo_ext_output
     // ====================================================================
-    //void draw_detections_blurred_cv_v3(mat_cv* mat, detection* dets, int num, float thresh, char** names, int classes, int ext_output)
     mat_cv* draw_detections_blurred_cv_v3(image im, detection* dets, int num, float thresh, char** names, int classes, int ext_output)
     {
       
@@ -1234,7 +1233,7 @@ extern "C" {
         }
         try {
             
-            //cv::Mat faceimage = cv::imread("D:/AI/Trainingdata/WIDER/face2_zeke.png");
+            cv::Mat faceimage = cv::imread("D:/AI/Trainingdata/WIDER/grass.jpg");
             cv::Mat* show_img = mat;
             
             int i, j;
@@ -1304,6 +1303,8 @@ extern "C" {
                     pt2.x = right;
                     pt2.y = bot;
                     cv::Size s = cv::Size(right - left, bot - top);
+                    //s.height *= 1.1;
+                    //s.width *= 1.1;
                     //To draw a rectangle around the detection
                     if (detObj.missCount > 0)
                     {
@@ -1314,10 +1315,11 @@ extern "C" {
                         color = getColor(0.8, 0, countFraction);
                         cv::rectangle(*show_img, pt1, pt2, color, 4, 8, 0);
                     }
-                    blurRectangle(show_img, pt1, pt2);
+                   
+                    //blurRectangle(show_img, pt1, pt2);
                     //cv::Mat blurred = blurRectangleEdgepreserve(*show_img, pt1, pt2);
                     //*show_img = blurred;
-                /*    cv::Mat r, t;
+                    cv::Mat r, t;
                     cv::resize(faceimage, r, s);
                     t = *show_img;
                     r.copyTo(t(cv::Rect(pt1.x, pt1.y, s.width, s.height)));
@@ -1325,7 +1327,7 @@ extern "C" {
                     int bheight = top - bot;
                     int bwidth = right - left;
 
-                    *show_img = t;*/
+                    *show_img = t;
 
                     //drawEllipse(show_img, pt1, bheight, bwidth);
                     cv::Scalar color;

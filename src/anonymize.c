@@ -252,7 +252,7 @@ void anon(char* cfgfile, char* weightfile, float thresh, float hier_thresh, int 
 
             if (nms) do_nms_sort(local_dets, local_nboxes, l.classes, nms);
 
-            printf("Objects:\n");
+            //printf("Objects:\n");
 
             /*   if (demo_json_port > 0) {
                    int timeout = 400000;
@@ -260,10 +260,10 @@ void anon(char* cfgfile, char* weightfile, float thresh, float hier_thresh, int 
                }
    */
             int* nDetPtr = &local_nboxes;
-            printf("calling merge2: %d\n", detStore->storeLength);
-            merge3(dets, nDetPtr, detStore, 3);
+            //printf("calling merge: %d\n", detStore->storeLength);
+            merge(dets, nDetPtr, detStore, 10);
 
-            printf("calling draw_detections_blurred_cv_v4: %d\n", detStore->storeLength);
+            //printf("calling draw_detections_blurred_cv_v4: %d\n", detStore->storeLength);
             draw_detections_blurred_cv_v4(show_img, detStore->store, detStore->storeLength, demo_thresh, demo_names, demo_classes, demo_ext_output);
 
             free_detections(local_dets, local_nboxes);
