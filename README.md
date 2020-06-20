@@ -10,6 +10,13 @@ More details: http://pjreddie.com/darknet/yolo/
 [![Contributors](https://img.shields.io/github/contributors/AlexeyAB/Darknet.svg)](https://github.com/AlexeyAB/darknet/graphs/contributors)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://github.com/AlexeyAB/darknet/blob/master/LICENSE)  
 
+* This is forked from AlexeyAB
+* Added anonymization methods: Blur and mask
+* Added short term detection store
+* Trained for face detection using WIDER-Faces. Demonstrates face anonymization and increased recall using the detection store.
+
+The detection store adds memory to video object detector. Originially, each video frame is analyzed for object detection individually, without any knowledge preserved from previous video frames. The detection store adds detections to memory, and if object not present in next video frame, detection is inserted from memory. Objects are identified using a collision algorithm. The length an object can be stored in memory can be set. It should not be too long, as this would lead to loss of precision and false positives. As objects move, the object in memory gets obsolete. To improve this, objects should be tracked, so their next position can be predicted.
+
 
 * [Requirements (and how to install dependecies)](#requirements)
 * [Pre-trained models](#pre-trained-models)
