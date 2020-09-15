@@ -1122,6 +1122,7 @@ extern "C" {
         try {
             cv::Mat* mat_ptr = new cv::Mat();
             cv::Mat& mat = *mat_ptr;
+            cv::Mat faceimage = cv::imread("D:/AI/Trainingdata/WIDER/grass.jpg");
             //cv::Mat faceimage = cv::imread("D:/AI/Trainingdata/WIDER/face2_zeke.png");
             //cv::Mat faceimage = cv::imread("D:/AI/Trainingdata/WIDER/tpde_female_1.JFIF");
             mat = image_to_mat_BGR(im);
@@ -1193,7 +1194,7 @@ extern "C" {
                     //cv::rectangle(mat, pt1, pt2, color, 2, 8, 0);
 
                     //Basic blur effect
-                    blurRectangle(&mat, pt1, pt2);
+                    //blurRectangle(&mat, pt1, pt2);
 
                    /*  cv::Mat blurred = blurRectangleEdgepreserve(mat, pt1, pt2);
                      mat = blurred;*/
@@ -1206,7 +1207,7 @@ extern "C" {
                     cv::resize(faceimage, r, s);
                     t = mat;
                     r.copyTo(t(cv::Rect(pt1.x, pt1.y, s.width, s.height)));
-*/
+                    */
                 }
             }
             if (ext_output) {
@@ -1225,6 +1226,7 @@ extern "C" {
         imwrite(filename, *show_img);
     }
 
+    ///For anonymization video
     void draw_detections_blurred_cv_v4(mat_cv* mat, detectedObj* detObjs, int num, float thresh, char** names, int classes, int ext_output)
     {
         if (num == 0) {
@@ -1316,9 +1318,12 @@ extern "C" {
                         cv::rectangle(*show_img, pt1, pt2, color, 4, 8, 0);
                     }
                    
-                    //blurRectangle(show_img, pt1, pt2);
-                    //cv::Mat blurred = blurRectangleEdgepreserve(*show_img, pt1, pt2);
-                    //*show_img = blurred;
+                    blurRectangle(show_img, pt1, pt2);
+                   /* cv::Mat blurred = blurRectangleEdgepreserve(*show_img, pt1, pt2);
+                    *show_img = blurred;*/
+
+                    //Perform anonymization
+                    /*
                     cv::Mat r, t;
                     cv::resize(faceimage, r, s);
                     t = *show_img;
@@ -1328,7 +1333,7 @@ extern "C" {
                     int bwidth = right - left;
 
                     *show_img = t;
-
+                    */
                     //drawEllipse(show_img, pt1, bheight, bwidth);
                     cv::Scalar color;
                     color = getColor(0.8, 0.6, 0);

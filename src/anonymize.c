@@ -261,7 +261,7 @@ void anon(char* cfgfile, char* weightfile, float thresh, float hier_thresh, int 
    */
             int* nDetPtr = &local_nboxes;
             //printf("calling merge: %d\n", detStore->storeLength);
-            merge(dets, nDetPtr, detStore, 10);
+            merge(dets, nDetPtr, detStore, 0);
 
             //printf("calling draw_detections_blurred_cv_v4: %d\n", detStore->storeLength);
             draw_detections_blurred_cv_v4(show_img, detStore->store, detStore->storeLength, demo_thresh, demo_names, demo_classes, demo_ext_output);

@@ -17,6 +17,8 @@ float boxCompare(box b1, box b2)
 {
     float r1 = boxRadius(b1) / 2;
     float r2 = boxRadius(b2) / 2;
+    //r1 /= 2;
+    //r2 /= 2;
     float r1r2 = r1 + r2;
     float c1c2 = sqrt(pow(b1.x - b2.x, 2) + pow(b1.y - b2.y, 2));
 
@@ -186,7 +188,7 @@ void merge(detection* dets, int* num, detectionStore* detStore, int maxMemCount)
             //printf("\nj=%d,", j);
             detection det = dets[j];
 
-            float cmp = boxCompare2(det.bbox, memDet.det.bbox);
+            float cmp = boxCompare(det.bbox, memDet.det.bbox);
             if (cmp < 0) {
                 //We say this is the same object.
                 //Can we say if this object is moving?

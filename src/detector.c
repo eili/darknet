@@ -1806,6 +1806,16 @@ void test_detector(char* datacfg, char* cfgfile, char* weightfile, char* filenam
         if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
         draw_detections_v3(im, dets, nboxes, thresh, names, alphabet, l.classes, ext_output);
         save_image(im, "predictions");
+       /* printf("Saving...\n");
+        if (filename) {
+            char src[100], dest[100];
+            printf(filename);
+            strcpy(src, filename);
+            strcpy(dest, "predictions/");
+            strcat(dest, src);
+            printf(dest);
+            save_image(im, dest);
+        }*/
         if (!dont_show) {
             show_image(im, "predictions");
         }
